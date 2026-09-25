@@ -4,7 +4,16 @@ steps:
   args:
   - '-c'
   - |
+    echo "Deploying DAGs..."
     gsutil -m rsync -r -d dags/ gs://us-central1-vendor-risk-com-23fc1948-bucket/dags
+
+    echo "Deploying BigQuery Stored Procedures..."
+    for sql_file in sql/*.sql; do
+      if [ -f "$sql_file" ]; then
+        echo "Executing $sql_file..."
+        bq query --use_legacy_sql=false < "$sql_file"
+      fi
+    done
 
 options:
   logging: CLOUD_LOGGING_ONLY
