@@ -1,6 +1,6 @@
-# Sample Third-Party Vendor Risk Assessment Platform
+# Sample Third-Party Vendor Risk Assessment Platform & Automated Vendor Risk Insights Generation
 
-I build an end-to-end data engineering and analytics pipeline designed to assess, score, and monitor third-party vendor risks. The platform ingests data from external APIs, PostgreSQL, and SQL Server databases, orchestrates workflows via Apache Airflow (Google Cloud Composer), processes data across BigQuery Medallion layers (Silver & Gold), and exposes analytical insights through Looker and Vertex AI.
+I build an end-to-end data engineering and analytics pipeline designed to assess, score, and monitor third-party vendor risks. The platform ingests data from external APIs, PostgreSQL, and SQL Server databases, orchestrates workflows via Apache Airflow (Google Cloud Composer), processes data across BigQuery Medallion layers (Silver & Gold), and exposes analytical insights through Looker. I automated the generation of structured key risk insights using Vertex AI and prompt based python script and exposed on the same Looker dashboard.
 
 ---
 
