@@ -5,3 +5,6 @@ steps:
   - '-c'
   - |
     gcloud storage rsync -r dags/ gs://us-central1-vendor-risk-com-23fc1948-bucket/dags/ --delete-unmatched-destination-objects
+
+options:
+  logging: CLOUD_LOGGING_ONLY
