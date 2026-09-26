@@ -16,7 +16,6 @@ BUCKET_NAME = "thirdparty-vendor-risk-2026-raw-layer"
 DATASET_SILVER = "cis_staging_silver_layer"
 DATASET_GOLD = "cis_thirdparty_gold_layer"
 
-# Dynamically resolve script paths relative to the DAG file's directory
 DAG_DIR = os.path.dirname(os.path.abspath(__file__))
 EXTRACT_SQL_SCRIPT_PATH = os.path.join(DAG_DIR, "extract_sqlserver.py")
 EXTRACT_API_SCRIPT_PATH = os.path.join(DAG_DIR, "extract_api.py")
@@ -30,7 +29,7 @@ with DAG(
     tags=["vendor-risk"],
 ) as dag:
 
-    # --- Task 1a: Extract SQL Server Data to GCS ---
+    # Extract SQL Server Data to GCS
     extract_sqlserver = BashOperator(
         task_id="extract_sqlserver",
         bash_command=f"python3 -u {EXTRACT_SQL_SCRIPT_PATH}",
@@ -42,7 +41,7 @@ with DAG(
         },
     )
 
-    # --- Task 1b: Load SQL Server Data from GCS into BigQuery ---
+    # Load SQL Server Data from GCS into BigQuery
     load_sqlserver = GCSToBigQueryOperator(
         task_id="load_sqlserver",
         bucket=BUCKET_NAME,
@@ -64,20 +63,20 @@ with DAG(
         ],
     )
 
-    # --- Task 2a: Extract API Data to GCS ---
+    # Extract API Data to GCS
     extract_api = BashOperator(
         task_id="extract_api",
         bash_command=f"python3 -u {EXTRACT_API_SCRIPT_PATH}",
         env={
             "GCP_PROJECT_ID": PROJECT_ID,
             "RAW_BUCKET": BUCKET_NAME,
-            "API_URL": "your-api-url-here",  # Replace with your actual API endpoint or use Airflow connection/secret
-            "API_SECRET_ID": "api-credentials-secret",
+            "API_URL": "https://my-first-docker-git-953400689956.us-central1.run.app/vendor-risk",
+            "API_SECRET_ID": "vendor-risk-api-key",
             "EXECUTION_DATE": "{{ logical_date.isoformat() }}",
         },
     )
 
-    # --- Task 2b: Ingest API Data from GCS into BigQuery ---
+    # Ingest API Data from GCS into BigQuery
     load_api = GCSToBigQueryOperator(
         task_id="load_api",
         bucket=BUCKET_NAME,
@@ -90,7 +89,7 @@ with DAG(
         schema_update_options=["ALLOW_FIELD_ADDITION", "ALLOW_FIELD_RELAXATION"],
     )
 
-    # 3. Calculate Derived Risk Procedure
+    # Calculate Derived Risk Procedure
     build_derived_risk = BigQueryInsertJobOperator(
         task_id="build_derived_risk",
         configuration={
@@ -105,7 +104,7 @@ with DAG(
         },
     )
 
-    # 4. Build Gold Layer Metric Values
+    # Build Gold Layer Metric Values
     build_all_metrics = BigQueryInsertJobOperator(
         task_id="build_all_metric_values",
         configuration={
@@ -120,7 +119,7 @@ with DAG(
         },
     )
 
-    # 5. Build Gold Layer Vendor Score Fact
+    # Build Gold Layer Vendor Score Fact
     build_vendor_score = BigQueryInsertJobOperator(
         task_id="build_vendor_score",
         configuration={
@@ -135,7 +134,7 @@ with DAG(
         },
     )
 
-    # 6. Data Quality Check
+    # Data Quality Check
     data_quality = BigQueryInsertJobOperator(
         task_id="data_quality",
         configuration={
@@ -150,7 +149,7 @@ with DAG(
         },
     )
 
-    # 7. Generate Risk Insights
+    # Generate Risk Insights
     generate_risk_insights = BashOperator(
         task_id="generate_risk_insights",
         bash_command=f"""
@@ -160,7 +159,7 @@ with DAG(
         """,
     )
 
-    # Execution Flow: Run both extract-and-load tracks in parallel, then proceed downstream
+    # Execution Flow: Running both extract-and-load tracks in parallel, then proceed downstream
     (
         [
             extract_sqlserver >> load_sqlserver,
