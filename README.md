@@ -7,23 +7,88 @@ I build an end-to-end data engineering and analytics pipeline designed to assess
 ## 🏗️ Sample Architecture Overview
 
 ```text
- REST API / PostgreSQL / SQL Server
-                 │
-                 ▼
-     Google Cloud Composer (Airflow)
-                 │
-                 ▼
-       Google Cloud Storage (GCS)
-                 │
-                 ▼
-        Google BigQuery
-          ├── Silver Layer (cis_staging_silver_layer)
-          └── Gold Layer   (cis_thirdparty_gold_layer)
-                 │
-         ┌───────┴───────┐
-         ▼               ▼
-      Looker         Vertex AI
+Sample REST API ─────┐
+                     │
+Sample SQL Server ───┤
+                     ▼
+              Cloud Composer
+                     │
+                     ▼
+              Cloud Storage
+                raw layer
+                     │
+                     ▼
+              BigQuery Silver
+                     │
+          ┌──────────┴──────────┐
+          ▼                     ▼
+    Derived risks       Source metrics
+          │                     │
+          └──────────┬──────────┘
+                     ▼
+              AllMetricValues
+                     │
+                     ▼
+              VendorScoreFact
+                     │
+                     ▼
+            Threshold detection
+                     │
+                     ▼
+                 Vertex AI
+                     │
+                     ▼
+               Risk Insights
+                     │
+                     ▼
+                  Looker
 ```
+
+## Complete DAG View
+                         Daily 06:30 AM UTC
+                              │
+                              ▼
+                        Generate run_id
+                              │
+                 ┌────────────┴────────────┐
+                 ▼                         ▼
+            Extract API              Extract SQL Server
+                 │                         │
+                 ▼                         ▼
+             GCS Raw layer              GCS Raw layer
+                 │                         │
+                 └────────────┬────────────┘
+                              ▼
+                       Load Silver
+                              │
+                              ▼
+                    Calculate Derived Risks
+                              │
+                              ▼
+                      AllMetricValues
+                              │
+                              ▼
+                       VendorScoreFact
+                              │
+                              ▼
+                         DQ checks
+                              │
+                     ┌────────┴─────────┐
+                     │                  │
+                   FAIL               PASS
+                     │                  │
+                     ▼                  ▼
+                  Alert            Threshold
+                                       │
+                                       ▼
+                                   Vertex AI
+                                       │
+                                       ▼
+                                  RiskInsight
+                                       │
+                                       ▼
+                                     Looker
+---
 
 1. **Ingestion:** Data extracted from REST APIs, PostgreSQL, and SQL Server databases using specialized Airflow extraction scripts (`extract_api.py`, `extract_sqlserver.py`).
 2. **Storage & Landing:** Raw extracts are dumped into Google Cloud Storage buckets (`thirdparty-vendor-risk-2026-raw-layer`).
